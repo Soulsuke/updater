@@ -1,0 +1,149 @@
+###############################################################################
+## > Distro Independent                                                      ##
+##   These are a series of functions made to update software not installed   ##
+##   via package manager (eg. through git).                                  ##
+##                                                                           ##
+##   PLEASE NOTE:                                                            ##
+##   These functions will take for granted you have the right permissions.   ##
+##   Any checks regarding that should be done before sourcing this gile.     ##
+###############################################################################
+
+source ./lib/utility.zsource
+
+#>>> Update winetricks:
+# Any given parameters will be ignored.
+update_winetricks()
+{
+  print_prompt "winetricks"
+
+  # Set variables:
+  W_DIR="/opt/share/winetricks"
+  W_EXEC="$W_DIR/src/winetricks"
+
+  # Update the git repository:
+  cd $W_DIR
+  git fetch --all &> /dev/null
+  git checkout  master &> /dev/null
+  git pull origin master
+
+  # Fix permissions:
+  find $W_DIR -type d -exec chmod 755 '{}' \;
+  find $W_DIR -type f -exec chmod 644 '{}' \;
+  chmod a+x $W_EXEC
+
+  # Unset variables:
+  unset W_DIR W_EXEC
+}
+
+#>>> Update xLava's Jedi Academy:
+# Any given parameters will be ignored.
+update_xlava_academy()
+{
+  print_prompt "xLava's Jedi Academy"
+
+  # Variables:
+  M_DIR="/opt/share/xLAva"
+  J_DIR="$M_DIR/git_repos/JediAcademyLinux"
+  game_data=("jagamex86.so" "jasp")
+
+  # Update the git repository:
+  cd $J_DIR
+  git fetch --all &> /dev/null
+  git checkout JediAcademyLinux &> /dev/null
+  git pull origin JediAcademyLinux
+
+  # Update executable symlinks and fix permissions:
+  cd $M_DIR
+  for i in $game_data; do
+    chmod a+r,a+x $J_DIR/code/Release/$i
+    rm -fr games/JediAcademy/$i &> /dev/null
+    ln -s $J_DIR/code/Release/$i games/JediAcademy
+  done
+
+  # Unser variables:
+  unset M_DIR J_DIR game_data i 
+}
+
+#>>> Update xLava's Jedi Outcast:
+# Any given parameters will be ignored.
+update_xlava_outcast()
+{
+  print_prompt "xLava's Jedi Outcast"
+
+  # Variables:
+  M_DIR="/opt/share/xLAva"
+  J_DIR="$M_DIR/git_repos/JediOutcastLinux"
+  game_data=("jk2gamex86.so" "jk2sp")
+
+  # Update the git repository:
+  cd $J_DIR
+  git fetch --all &> /dev/null
+  git checkout JediOutcastLinux &> /dev/null
+  git pull origin JediOutcastLinux
+
+  # Update executable symlinks and fix permissions:
+  cd $M_DIR
+  for i in $game_data; do
+    chmod a+r,a+x $J_DIR/code/Release/$i
+    rm -fr games/JediAcademy/$i &> /dev/null
+    ln -s $J_DIR/code/Release/$i games/JediAcademy
+  done
+
+  # Unser variables:
+  unset M_DIR J_DIR game_data i 
+}
+
+#>>> Update youtube-dl:
+# Any given parameters will be ignored.
+function update_youtubedl
+{
+  print_prompt "youtube-dl"
+  youtube-dl -U
+}
+
+#>>> Update Zuki themes:
+# Any given parameters will be ignored.
+update_zuki()
+{
+  print_prompt "Zuki themes"
+
+  # Variables:
+  Z_DIR="/opt/share/zuki-themes"
+
+  # Update git repositores:
+  cd $Z_DIR
+  git fetch --all &> /dev/null
+  git checkout master &> /dev/null
+  git pull origin master
+
+  # Fix permissions:
+  find $Z_DIR -type d -exec chmod 755 '{}' \;
+  chmod -R a+r,a-w,u+w $Z_DIR
+
+  # Update symlinks:
+  for i in *; do
+    if [[ -d $i ]]; then
+      rm -fr "/usr/share/themes/$i" &> /dev/null
+      ln -s "$Z_DIR/$i" "/usr/share/themes/$i"
+    fi
+  done
+
+  # Unset variables:
+  unset Z_DIR i
+}
+
+#>>> Update everything:
+# Any argument given will be ignored.
+update_independent()
+{
+  update_winetricks
+  print ""
+  update_xlava_academy
+  print ""
+  update_xlava_outcast
+  print ""
+  update_youtubedl
+  print ""
+  update_zuki
+}
+

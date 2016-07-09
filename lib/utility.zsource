@@ -1,0 +1,26 @@
+###############################################################################
+## > Utility belt                                                            ##
+##   These are a series of autoloads and functions common to various         ##
+##   components, for the most general purpouses.                             ##
+###############################################################################
+
+#>>> Now in technicolor:
+autoload colors ; colors
+
+#>>> Print a neat prompt:
+# Any argument given will be used for the prompt's title.
+function print_prompt()
+{
+  TMP_PRMT="/=====|$fg[blue]$1$fg[default]|"
+
+  # Exactly 80 characters long:
+  while [[ $#TMP_PRMT -le 88 ]]; do
+    TMP_PRMT="$TMP_PRMT="  
+  done
+
+  TMP_PRMT="$TMP_PRMT\\"
+
+  print "$TMP_PRMT"
+  unset TMP_PRMT
+}
+

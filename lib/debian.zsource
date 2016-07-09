@@ -1,0 +1,286 @@
+###############################################################################
+## > Debian                                                                  ##
+##   These are a series of functions made to update a Debian system via apt, ##
+##   apt-get or aptitude.                                                    ##
+##   It should also work on Debian derivates.                                ##
+##                                                                           ##
+##   PLEASE NOTE:                                                            ##
+##   These functions will take for granted you have root permissions.        ##
+##   Any checks regarding that should be done before sourcing this gile.     ##
+###############################################################################
+
+source ./lib/utility.zsource
+
+#>>> Update the system trough apt:
+# Any argument given will be used for apt.
+# Should work regardless of system setup.
+function update_apt()
+{
+  print_prompt "apt"
+  
+  apt update
+
+  # No parameters: standard pacman update.
+  if [[ 0 == $# ]]; then
+    apt upgrade -y --allow-downgrades --with-new-pkgs
+
+  # Some arguments have been passed: let's throw them at pacman.
+  else
+    apt upgrade $@
+  fi
+}
+
+#>>> Update the system trough apt-get:
+# Any argument given will be used for apt-get.
+# Should work regardless of system setup.
+function update_apt_get()
+{
+  print_prompt "apt-get"
+  
+  apt-get update
+
+  # No parameters: standard pacman update.
+  if [[ 0 == $# ]]; then
+    apt-get upgrade -y --allow-downgrades --with-new-pkgs
+
+  # Some arguments have been passed: let's throw them at pacman.
+  else
+    apt-get upgrade $@
+  fi
+}
+
+#>>> Update the system trough aptitude:
+# Any argument given will be used for aptitude.
+# Should work regardless of system setup.
+function update_aptitude()
+{
+  print_prompt "aptitude"
+  
+  aptitude update
+
+  # No parameters: standard pacman update.
+  if [[ 0 == $# ]]; then
+    aptitude safe-upgrade -y
+
+  # Some arguments have been passed: let's throw them at pacman.
+  else
+    aptitude safe-upgrade $@
+  fi
+}
+
+#>>> Update the system trough whichever program gets found first:
+# Any argument given will be used for apt, apt-get or aptitude.
+# Should work regardless of system setup.
+function update_wrapper()
+{
+  # First choice: apt
+  if hash apt 2> /dev/null; then
+    update_apt $@
+
+  # Second choice: apt-get
+  elif hash apt-get 2> /dev/null; then
+    update_apt_get $@
+
+  # Last chance: aptitude
+  elif hash aptitude 2> /dev/null; then
+    update_aptitude
+
+  # If everything fails, let's stop.
+  else
+    print -n "$fg[red]Neither apt, apt-get nor aptitude found on the system!"
+    print "$fg[default]"
+  fi
+}
+
+#>>> Update the system trough whichever program gets found first,
+#    but first putting some packages on hold:
+# Any argument given will be used for apt, apt-get or aptitude.
+# Should work regardless of system setup.
+function update_with_exclude()
+{
+  # apt-show-versions is required for this to work.
+  if hash apt-show-versions 2> /dev/null; then
+    print_prompt "Packages put on hold"
+
+    # Variables:
+    EXCLUDE_LIST="$HOME/.exclude_list"
+    LIST_PRE_PASED=()
+    LIST_PARSED=()
+
+    # Read the upgradeable packages:
+    ASV_OUT=$(apt-show-versions -u | grep -v manually)
+    UPG_LIST=( $(print $ASV_OUT | sed -e "s,/.*,,g") )   # pkgs' names
+    UPG_VERS=( $(print $ASV_OUT | sed -e "s,.*to ,,g") ) # pkg's versions
+
+    # If the exclude list does not exist, create it:
+    if [[ ! -e $EXCLUDE_LIST ]]; then
+      touch $EXCLUDE_LIST
+      chmod 644 $EXCLUDE_LIST
+      print "# Syntax:" >> $EXCLUDE_LIST
+      print -n "# package_name                 > blocks all " >> $EXCLUDE_LIST
+      print "versions of package_name" >> $EXCLUDE_LIST
+      print -n "# package_name=package_version > blocks pack" >> $EXCLUDE_LIST
+      print "age_name only if package_version" >> $EXCLUDE_LIST
+      print -n "#                                is going to" >> $EXCLUDE_LIST
+      print " be installed" >> $EXCLUDE_LIST
+      print "#" >> $EXCLUDE_LIST
+      print -n "# Everything following a # on the same line " >> $EXCLUDE_LIST
+      print "is considered a comment." >> $EXCLUDE_LIST
+      print "#" >> $EXCLUDE_LIST
+      print -n "# Do NOT use any space character." >> $EXCLUDE_LIST
+      print "# Try not to leave empty lines." >> $EXCLUDE_LIST
+      print "#" >> $EXCLUDE_LIST
+      print -n "# REMEMBER to specify the package's architec" >> $EXCLUDE_LIST
+      print "ture in its name\!\!\!" >> $EXCLUDE_LIST
+      print "#" >> $EXCLUDE_LIST
+      print "# Examples:" >> $EXCLUDE_LIST
+      print "# python-twisted:all" >> $EXCLUDE_LIST
+      print "# xterm:amd64=3:21-1" >> $EXCLUDE_LIST
+      print "#" >> $EXCLUDE_LIST
+
+    # If it does, parse it.
+    else
+      LIST_PRE_PARSED=( $(grep -v -E "^#" $EXCLUDE_LIST) )
+      # Gotta remove comments starting with #:
+      for i in $LIST_PRE_PARSED; do
+        ENTRY="$(print $i | sed -e "s,#.*,,g")"
+        LIST_PARSED=( $LIST_PARSED $ENTRY )
+      done
+    fi
+
+    # Now let's put the right packages on hold:
+    ON_HOLD=()
+
+    # For each upgradeable package...
+    for (( i = 1; i <= $#UPG_LIST; i++ )); do
+      # ...check if its name is on the exclude list:
+      for j in $LIST_PARSED; do
+        NAME="$(print $j | nawk -F = '{print $1}')"
+        VERS="$(print $j | nawk -F = '{print $2}')"
+        # If the name is right...
+        if [[ "$UPG_LIST[$i]" == "$NAME" ]]; then
+          # ...And either the version matches as well OR every version has to 
+          # be excluded...
+          if [[ "$UPG_VERS[$i]" == "$VERS" ]] || [[ "$VERS" == "" ]]; then
+            # Put the package on hold:
+            print "$NAME hold" | dpkg --set-selections
+            # And save its name for later:
+            ON_HOLD=( $ON_HOLD $NAME )
+          fi
+        fi
+      done
+    done
+
+    # Now, let's print the list:
+    if [[ 0 == $#ON_HOLD ]]; then
+      print "No packages had to be put on hold."
+      print ""
+    else
+      print $ON_HOLD
+    fi
+
+    # And give some time to the user to be able to read it:
+    sleep 3
+
+    # Now, update the system:
+    update_wrapper $@
+
+    # Once that's done, let's take the packages off hold:
+    for i in $ON_HOLD; do
+      print "$i install" | dpkg --set-selections
+    done
+
+    # Unset everything before moving further:
+    unset EXCLUDE_LIST ASV_OUT UPG_LIST UPG_VERS LIST_PRE_PARSED LIST_PARSED
+    unset ENTRY i j ON_HOLD NAME VERS
+
+  # Error message if apt-show-versions is not found.
+  else
+    print "$fg[red]apt-show-versions not found!$fg[default]"
+  fi
+}
+
+#>>> Entry point to update Arch Linux:
+# This will handle different cases.
+# The first given parameter will be used as the program name,
+# the second one for checks.
+function update_distro()
+{
+  # Variables:
+  HELP="Usage on Debian and derivates:
+$1               : update everything possible
+$1 --apt         : only update the system through apt
+$1 --apt-get     : only update the system through apt-get
+$1 --aptitude    : only update the system through aptitude
+$1 --exclude     : update the system using an exclude list
+$1 --independent : only update distro independent software
+$1 --help        : show this help reference"
+
+  # First off: every user should be able to use the -h/--help option:
+  if [[ 2 == $# && ( "-h" == $2 || "--help" == $2 ) ]]; then
+    print $HELP
+    return 0
+  fi
+
+  # Second: root check.
+  if [[ "root" != $(whoami) ]]; then
+    print -n "$fg[red]ERROR: root privileges are needed to run this script."
+    print "$fg[default]"
+    return -1
+  fi
+
+  # ALWAYS REMEMBER: $1 is always the program name ($0 for main.zsh)!
+
+  # 1 parameter: update everything.
+  if [[ 1 == $# ]]; then
+    update_wrapper
+    print ""
+    source ./lib/distro_independent.zsource
+    update_independent
+
+  # 2 parameters: gotta perform checks.
+  elif [[ 2 == $# ]]; then
+
+    # Only update the system through apt:
+    if [[ "--apt" == $2 ]]; then
+      update_apt
+
+    # Only update the system through apt-get
+    elif [[ "--apt-get" == $2 ]]; then
+      update_apt_get
+
+    # Only update the system through aptitude:
+    elif [[ "--aptitude" == $2 ]]; then
+      update_aptitude
+
+    # Only update the system through aptitude:
+    elif [[ "--aptitude" == $2 ]]; then
+      update_aptitude
+
+    # Only update the system, using an exclude list:
+    elif [[ "--exclude" == $2 ]]; then
+      update_with_exclude
+
+    # Only update distro independent software:
+    elif [[ "--independent" == $2 ]]; then
+      source ./lib/distro_independent.zsource
+      update_independent
+
+    # Unsupported parameter: quit.
+    else
+      print $HELP
+      return -1
+    fi
+
+  # Wrong number of parameters: quit.
+  else
+    print $HELP
+    return -1
+  fi
+
+  # Unset variables:
+  unset HELP
+
+  return 0
+}
+
