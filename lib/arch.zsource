@@ -42,6 +42,12 @@ function update_aur_single()
   # Control variable:
   SUM_OF_ALL_FEARS=0
 
+  # Save the original permissions (if we are root):
+  if [[ $(whoami) == "root" ]]; then
+    OLD_USER="$(ls -l $1 | tail -n1 | awk '{print $3}')"
+    OLD_GROUP="$(ls -l $1 | tail -n1 | awk '{print $4}')"
+  fi
+
   # Git timestamp:
   GIT_TIMESTAMP=""
 
@@ -101,6 +107,11 @@ function update_aur_single()
       # If the user that run this is root, let's install it using the 
       # aur_upgrader user:
       if [[ $(whoami) == "root" ]]; then
+        # Set the right permissions, since the repo has been updated by root:
+        cd - &> /dev/null
+        chown -R aur_upgrader:aur_upgrader $1
+        cd $1 &> /dev/null
+        # Build and install the package:
         su -c "makepkg -sri --noconfirm" aur_upgrader
         # At this point, regardless of the outcome, clean the repo up:
         git clean -d -f -x &> /dev/null
@@ -133,6 +144,12 @@ function update_aur_single()
   # Go back to where we came from:
   cd - &> /dev/null
 
+  # Set back the original permissions (if we are root):
+  if [[ $(whoami) == "root" ]]; then
+    chown -R $OLD_USER:$OLD_GROUP $1
+    unset OLD_USER OLD_GROUP
+  fi
+
   # No leftovers.
   unset SUM_OF_ALL_FEARS GIT_TIMESTAMP_OLD GIT_TIMESTAMP_NEW i R_NAME
 }
@@ -147,21 +164,12 @@ function update_aur_all()
 {
   # Because it's cool:
   print_prompt "AUR"
-
-  # Variables:
-  OLD_USER="$(ls -l $AUR_DIR | tail -n1 | awk '{print $3}')"
-  OLD_GROUP="$(ls -l $AUR_DIR | tail -n1 | awk '{print $4}')"
  
   # For non verbose mode, a little thing to make the user know it didn't hang:
   if [[ $1 != "-v" ]]; then
     print -n "Checking..."
   fi
  
-  # Set the right permissions (if we are root):
-  if [[ $(whoami) == "root" ]]; then
-    chown -R aur_upgrader:aur_upgrader $AUR_DIR
-  fi 
-
   # For every directory...
   for MAIN_DIR in $AUR_DIR/*(/); do
     # If it's a git repository...
@@ -178,18 +186,13 @@ function update_aur_all()
     fi
   done
   
-  # Set back the original permissions (if we are root):
-  if [[ $(whoami) == "root" ]]; then
-    chown -R $OLD_USER:$OLD_GROUP $AUR_DIR
-  fi
-
   # As above, so below.
   if [[ $1 != "-v" ]]; then
     print "Done."
   fi
   
   # Unset variables:
-  unset OLD_USER OLD_GROUP MAIN_DIR SUB_DIR
+  unset MAIN_DIR SUB_DIR
 }
 
 #>>> Entry point to update Arch Linux:
