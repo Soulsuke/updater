@@ -114,7 +114,7 @@ function update_aur_single()
         # Build and install the package:
         su -c "makepkg -sri --noconfirm" aur_upgrader
         # At this point, regardless of the outcome, clean the repo up:
-        git clean -d -f -x &> /dev/null
+        git clean -dfx &> /dev/null
         git reset --hard HEAD &> /dev/null
       fi
 
@@ -140,6 +140,9 @@ function update_aur_single()
       print -n "Checking..."
     fi
   fi
+
+  # Remove the heavy and useless src directory:
+  rm -fr ./src &> /dev/null
 
   # Go back to where we came from:
   cd - &> /dev/null
