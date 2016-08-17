@@ -120,7 +120,7 @@ function update_aur_single()
 
       # If we're in verbose mode, gotta print the "checking" message again:
       if [[ $2 != "-v" ]]; then
-        print -n "Checking..."
+        print -n "\nChecking..."
       fi
     fi
 
