@@ -29,6 +29,12 @@ function update_pacman()
   else
     pacman $@
   fi
+
+  # Removed uninstalled packages from the cache:
+  paccache -ruk0
+
+  # Just keep the latest 3 versions of installed packages in the cache:
+  paccache -r
 }
 
 #>>> Update a single AUR package:
