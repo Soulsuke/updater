@@ -256,7 +256,7 @@ $1 -h/--help        : show this help reference"
     if [[ $2 == "-a" || $2 == "--aur" ]]; then
       # Check for the owner of the AUR directory:
       if [[ $(whoami) == \
-            "$(ls -l /opt/share/AUR | tail -n1 | awk '{print $3}')" ]]; then
+            "$(ls -l $AUR_DIR | tail -n1 | awk '{print $3}')" ]]; then
         update_aur_all
 
       # Failed! Check if we are root:
@@ -296,7 +296,7 @@ $1 -h/--help        : show this help reference"
     if [[ ( "-a" == $2 || "--aur" == $2 ) && "-v" == $3 ]]; then
       # Check for the owner of the AUR directory:
       if [[ $(whoami) == \
-            "$(ls -l /opt/share/AUR | tail -n1 | awk '{print $3}')" ]]; then
+            "$(ls -l $AUR_DIR | tail -n1 | awk '{print $3}')" ]]; then
         update_aur_all "-v"
 
       # Failed! Check if we are root:
