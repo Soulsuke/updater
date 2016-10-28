@@ -111,7 +111,6 @@ function update_aur_single()
       if [[ $(whoami) == "root" ]]; then
         # Set the right permissions, since the repo has been updated by root:
         cd - &> /dev/null
-        chown -R aur_upgrader:aur_upgrader $1
         cd $1 &> /dev/null
         # Build and install the package:
         su -c "makepkg -sri --noconfirm" aur_upgrader

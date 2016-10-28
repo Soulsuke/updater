@@ -22,6 +22,7 @@ update_winetricks()
 
   # Update the git repository:
   cd $W_DIR
+  git reset --hard
   git fetch --all &> /dev/null
   git checkout  master &> /dev/null
   git pull origin master
@@ -48,6 +49,7 @@ update_xlava_academy()
 
   # Update the git repository:
   cd $J_DIR
+  git reset --hard
   git fetch --all &> /dev/null
   git checkout JediAcademyLinux &> /dev/null
   git pull origin JediAcademyLinux
@@ -77,6 +79,7 @@ update_xlava_outcast()
 
   # Update the git repository:
   cd $J_DIR
+  git reset --hard
   git fetch --all &> /dev/null
   git checkout JediOutcastLinux &> /dev/null
   git pull origin JediOutcastLinux
@@ -112,6 +115,7 @@ update_zuki()
 
   # Update git repositores:
   cd $Z_DIR
+  git reset --hard
   git fetch --all &> /dev/null
   git checkout master &> /dev/null
   git pull origin master
