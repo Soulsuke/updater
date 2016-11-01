@@ -79,6 +79,11 @@ function update_aur_single()
   GIT_TIMESTAMP_NEW=$(git log --decorate | grep Date | head -n1 | \
                       sed "s,Date:   ,,g")
 
+  # Be sure we won't mess up permissions:
+  if [[ "root" == "$(whoami)" ]]; then
+    chown -R $(stat -c '%U' $1):$(stat -c '%G' $1) $1
+  fi
+
   # Everything went right.
   if [[ 0 == $SUM_OF_ALL_FEARS ]]; then 
 
