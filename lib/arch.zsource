@@ -81,7 +81,7 @@ function update_aur_single()
 
   # Be sure we won't mess up permissions:
   if [[ "root" == "$(whoami)" ]]; then
-    chown -R $(stat -c '%U' $1):$(stat -c '%G' $1) $1
+    chown -R $(stat -c '%U' $PWD):$(stat -c '%G' $PWD) $PWD
   fi
 
   # Everything went right.
@@ -114,14 +114,13 @@ function update_aur_single()
       # If the user that run this is root, let's install it using the 
       # aur_upgrader user:
       if [[ $(whoami) == "root" ]]; then
-        # Set the right permissions, since the repo has been updated by root:
-        cd - &> /dev/null
-        cd $1 &> /dev/null
         # Build and install the package:
         su -c "makepkg -sri --noconfirm" aur_upgrader
         # At this point, regardless of the outcome, clean the repo up:
         git clean -dfx &> /dev/null
         git reset --hard HEAD &> /dev/null
+        # Set the right permissions:
+        chown -R $(stat -c '%U' $PWD):$(stat -c '%G' $PWD) $PWD
       fi
 
       # If we're in verbose mode, gotta print the "checking" message again:
