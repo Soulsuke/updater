@@ -111,16 +111,27 @@ function update_aur_single()
       print " |-> $fg[cyan]$GIT_TIMESTAMP_OLD$fg[default]"
       print " --> $fg[cyan]$GIT_TIMESTAMP_NEW$fg[default]"
 
-      # If the user that run this is root, let's install it using the 
-      # aur_upgrader user:
-      if [[ $(whoami) == "root" ]]; then
-        # Build and install the package:
-        su -c "makepkg -sri --noconfirm" aur_upgrader
+      # Attempt to go any further only if we are root or the owner of the
+      # folder:
+      if [[ $(whoami) == "root" || $(whoami) == $(stat -c '%U' $PWD) ]]; then
+        # If we are root, gotta update via the aur_upgrader user:
+        if [[ $(whoami) == "root" ]]; then
+          # Build and install the package:
+          su -c "makepkg -sri --noconfirm" aur_upgrader
+        # Else, we are the owner and can give directly the makepkg command:
+        else
+          makepkg -sri --noconfirm
+        fi
         # At this point, regardless of the outcome, clean the repo up:
         git clean -dfx &> /dev/null
         git reset --hard HEAD &> /dev/null
-        # Set the right permissions:
-        chown -R $(stat -c '%U' $PWD):$(stat -c '%G' $PWD) $PWD
+        # Set the right permissions as root:
+        if [[ $(whoami) == "root" ]]; then
+          chown -R $(stat -c '%U' $PWD):$(stat -c '%G' $PWD) $PWD
+        # Else, attempt to sudo through it:
+        else
+          sudo chown -R $(stat -c '%U' $PWD):$(stat -c '%G' $PWD) $PWD
+        fi
       fi
 
       # If we're in verbose mode, gotta print the "checking" message again:
