@@ -35,6 +35,12 @@ function update_pacman()
 
   # Just keep the latest 3 versions of installed packages in the cache:
   paccache -r
+
+  # If pkgfile is available, update it as well:
+  which pkgfile &> /dev/null
+  if [[ 0 == $? ]]; then
+    pkgfile -u
+  fi
 }
 
 #>>> Update a single AUR package:
