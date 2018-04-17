@@ -10,7 +10,7 @@
 ###############################################################################
 
 #>>> AUR main directory:
-AUR_DIR="/opt/share/AUR"
+AUR_DIR="/opt/7shi/share/AUR"
 
 source ./lib/utility.zsource
 
