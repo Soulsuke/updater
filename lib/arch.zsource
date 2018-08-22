@@ -9,9 +9,6 @@
 ##   Any checks regarding that should be done before sourcing this gile.     ##
 ###############################################################################
 
-#>>> AUR main directory:
-AUR_DIR="/opt/7shi/share/AUR"
-
 source ./lib/utility.zsource
 
 #>>> Update the system trough pacman:
@@ -50,155 +47,13 @@ function update_pacman()
   fi
 }
 
-#>>> Update a single AUR package:
-# This will only work on systems where there's an user called "aur_upgrader"
-# who can use pacman with root privileges without being prompted for a
-# password.
-# To achieve that, add the following line to your sudoers file:
-# aur_upgrader ALL=(ALL:ALL) NOPASSWD: /usr/bin/pacman
-# Then, make the group aur_upgrader owner of the AUR folder,
-# and make such directory group writable.
-function update_aur_single()
-{
-  # Control variable:
-  SUM_OF_ALL_FEARS=0
-
-  # Git timestamp:
-  GIT_TIMESTAMP=""
-
-  # If we did everything as root, set back the right user and group:
-  if [[ "root" == "$(whoami)" ]]; then
-    chown -R aur_upgrader:$( ls -ld $1 | awk '{print $4}' ) "$1"
-    chmod -R g+w "$1" &> /dev/null
-  fi
-
-  # Enter the repo directory:
-  cd "$1" &> /dev/null
-  SUM_OF_ALL_FEARS=$(( $SUM_OF_ALL_FEARS + $? ))
-
-  # Clean non-git files:
-  git clean -d -f -x &> /dev/null
-  SUM_OF_ALL_FEARS=$(( $SUM_OF_ALL_FEARS + $? ))
-  # Make sure there are no changes to the source:
-  git reset --hard HEAD &> /dev/null
-  SUM_OF_ALL_FEARS=$(( $SUM_OF_ALL_FEARS + $? ))
-  # Check the timestamp of the current version:
-  GIT_TIMESTAMP_OLD=$(git log --decorate | grep Date | head -n1 | \
-                      sed "s,Date:   ,,g")
-  # Fetch the latest git info:
-  git fetch --all &> /dev/null
-  SUM_OF_ALL_FEARS=$(( $SUM_OF_ALL_FEARS + $? ))
-  # Checkout to the master branch:
-  git checkout master &> /dev/null
-  SUM_OF_ALL_FEARS=$(( $SUM_OF_ALL_FEARS + $? ))
-  # Make sure the master branch is up to date:
-  git pull origin master &> /dev/null
-  SUM_OF_ALL_FEARS=$(( $SUM_OF_ALL_FEARS + $? ))
-  # Save the new timestamp:
-  GIT_TIMESTAMP_NEW=$(git log --decorate | grep Date | head -n1 | \
-                      sed "s,Date:   ,,g")
-
-  # If we did everything as root, set back the right user and group:
-  if [[ "root" == "$(whoami)" ]]; then
-    chown -R aur_upgrader:$( ls -ld "$1" | awk '{print $4}' ) "$1"
-  fi
-
-  # Everything went right.
-  if [[ 0 == $SUM_OF_ALL_FEARS ]]; then 
-
-    # To be extra sure, set back the right file permissions here:
-    find "$1" -type f -exec chmod a+r '{}' \;
-    find "$1" -type d -exec chmod a+x,a+r '{}' \;
-    chmod -R g+w,u+w "$1"
-
-    # No updates detected:
-    if [[ $GIT_TIMESTAMP_OLD == $GIT_TIMESTAMP_NEW ]]; then
-
-      # If we're in verbose mode, print its timestamp.
-      if [[ $2 == "-v" ]]; then
-        print "$1:"
-        print " * $fg[cyan]$GIT_TIMESTAMP_NEW$fg[default]"
-
-      # If not verbose, just a dot.
-      else
-        print -n "."
-      fi
-
-    # Update detected: print the old and new timestamps.
-    else
-      # If we're in verbose mode, gotta put a newline here:
-      if [[ $2 != "-v" ]]; then
-        print ""
-      fi
-
-      print "$1:"
-      print " |-> $fg[cyan]$GIT_TIMESTAMP_OLD$fg[default]"
-      print " --> $fg[cyan]$GIT_TIMESTAMP_NEW$fg[default]"
-
-      # Attempt to go any further only if we are root or the owner of the
-      # folder:
-      if [[ $(whoami) == "root" || $(whoami) == $(stat -c '%U' $PWD) ]]; then
-        # If we are root, gotta update via the aur_upgrader user:
-        if [[ $(whoami) == "root" ]]; then
-          # Build and install the package:
-          su -c "makepkg -sri --noconfirm" aur_upgrader
-        # Else, we are the owner and can give directly the makepkg command:
-        else
-          makepkg -sri --noconfirm
-        fi
-
-        # At this point, regardless of the outcome, clean the repo up:
-        git clean -dfx &> /dev/null
-        git reset --hard HEAD &> /dev/null
-        # Set the right permissions as root:
-        if [[ $(whoami) == "root" ]]; then
-          chown -R $(stat -c '%U' $PWD):$(stat -c '%G' $PWD) $PWD
-        # Else, attempt to sudo through it:
-        else
-          sudo chown -R $(stat -c '%U' $PWD):$(stat -c '%G' $PWD) $PWD
-        fi
-      fi
-
-      # If we're in verbose mode, gotta print the "checking" message again:
-      if [[ $2 != "-v" ]]; then
-        print -n "\nChecking..."
-      fi
-    fi
-
-  # Something went wrong.
-  else
-    # If we're in verbose mode, gotta put a newline here:
-    if [[ $2 != "-v" ]]; then
-      print ""
-    fi
-
-    print "$1:"
-    print -n " > $fg[red]An error has occurred! Code$fg[default] "
-    print "$SUM_OF_ALL_FEARS"
-
-    # If we're in verbose mode, gotta print the "checking" message again:
-    if [[ $2 != "-v" ]]; then
-      print -n "Checking..."
-    fi
-  fi
-
-  # Remove the heavy and useless src directory:
-  rm -fr ./src &> /dev/null
-
-  # Go back to where we came from:
-  cd - &> /dev/null
-
-  # No leftovers.
-  unset SUM_OF_ALL_FEARS GIT_TIMESTAMP_OLD GIT_TIMESTAMP_NEW i R_NAME
-}
-
 #>>> Update all AUR packages:
 # This will only work on systems where there's an user called "aur_upgrader"
 # who can use pacman with root privileges without being prompted for a
 # password.
 # To achieve that, add the following line to your sudoers file:
 # aur_upgrader ALL=(ALL:ALL) NOPASSWD: /usr/bin/pacman
-function update_aur_all()
+function update_aur()
 {
   # Because it's cool:
   print_prompt "AUR"
@@ -210,34 +65,11 @@ function update_aur_all()
     return -1;
   fi
  
-  # For non verbose mode, a little thing to make the user know it didn't hang:
-  if [[ $1 != "-v" ]]; then
-    print -n "Checking..."
-  fi
- 
-  # For every directory...
-  for MAIN_DIR in $AUR_DIR/*(/); do
-    # If it's a git repository...
-    if [[ -e $MAIN_DIR/.git ]]; then
-      # Handle it.
-      update_aur_single $MAIN_DIR $@
-    # If it's not...
-    else
-      # For every sub directory...
-      for SUB_DIR in $MAIN_DIR/*(/); do
-        # Handle it as a git repository.
-        update_aur_single $SUB_DIR $@
-      done
-    fi
-  done
-  
-  # As above, so below.
-  if [[ $1 != "-v" ]]; then
-    print "Done."
-  fi
-  
-  # Unset variables:
-  unset MAIN_DIR SUB_DIR
+  # Use yay:
+  su -c "yay -Syu" aur_upgrader
+
+  # At the end, remove the cache:
+  rm -fr /home/aur_upgrader/.cache/yay
 }
 
 #>>> Entry point to update Arch Linux:
@@ -249,7 +81,7 @@ function update_distro()
   # Variables:
   HELP="Usage on Arch Linux:
 $1                  : update everything possible
-$1 -a/--aur [-v]    : only update AUR packages (with or without verbose output)
+$1 -a/--aur         : only update AUR packages
 $1 -p/--pacman      : only update the system through pacman
 $1 -i/--independent : only update distro independent software
 $1 -h/--help        : show this help reference"
@@ -289,7 +121,7 @@ $1 -h/--help        : show this help reference"
     su -c true aur_upgrader
     if [[ 0 == $? ]]; then
       print ""
-      update_aur_all
+      update_aur
     fi
     print ""
     source ./lib/distro_independent.zsource
@@ -303,14 +135,14 @@ $1 -h/--help        : show this help reference"
       # Check for the owner of the AUR directory:
       if [[ $(whoami) == \
             "$(ls -l $AUR_DIR | tail -n1 | awk '{print $3}')" ]]; then
-        update_aur_all
+        update_aur
 
       # Failed! Check if we are root:
       elif [[ $(whoami) == "root" ]]; then
         # check if the aur_upgrader user exists:
         su -c true aur_upgrader
         if [[ 0 == $? ]]; then
-          update_aur_all
+          update_aur
         else
           print "aur_upgrader is not an existing user. Aborting."
         fi
@@ -331,36 +163,6 @@ $1 -h/--help        : show this help reference"
       update_independent
 
     # Unsupported parameter: quit.
-    else
-      print $HELP
-      return -1
-    fi
-
-  # 3 parameters:
-  elif [[ 3 == $# ]]; then
-    # Can only be -a/--aur and -v:
-    if [[ ( "-a" == $2 || "--aur" == $2 ) && "-v" == $3 ]]; then
-      # Check for the owner of the AUR directory:
-      if [[ $(whoami) == \
-            "$(ls -l $AUR_DIR | tail -n1 | awk '{print $3}')" ]]; then
-        update_aur_all "-v"
-
-      # Failed! Check if we are root:
-      elif [[ $(whoami) == "root" ]]; then
-        # check if the aur_upgrader user exists:
-        su -c true aur_upgrader
-        if [[ 0 == $? ]]; then
-          update_aur_all "-v"
-        else
-          print "aur_upgrader is not an existing user. Aborting."
-        fi
-      
-      # Lacking the right permissions.
-      else
-        print -n "$fg[red]ERROR: lacking the permissions to update AUR"
-        print " packages.$fg[default]"
-      fi
-
     else
       print $HELP
       return -1
