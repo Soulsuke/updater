@@ -95,21 +95,9 @@ $1 -h/--help        : show this help reference"
   # Second: permissions.
   # Not root...
   if [[ "root" != $(whoami) ]]; then
-    ## ...And not the owner of the AUR folder:
-    if [[ "$(ls -l $AUR_DIR | tail -n1 | awk '{print $3}')" != $(whoami) ]];
-    then
-      print -n "$fg[red]ERROR: root privileges are needed to run this script."
-      print "$fg[default]"
-      return -1
-    # ...But the owner of the AUR folder...
-    else
-      # ...But not performing any AUR operations:
-      if [[ "--aur" != $2 && "-a" != $2 ]]; then
-        print -n "$fg[red]ERROR: root privileges are needed to run this "
-        print "script.$fg[default]"
-        return -1
-      fi
-    fi
+    print -n "$fg[red]ERROR: root privileges are needed to run this script."
+    print "$fg[default]"
+    return -1
   fi
 
   # ALWAYS REMEMBER: $1 is always the program name ($0 for main.zsh)!
@@ -132,25 +120,12 @@ $1 -h/--help        : show this help reference"
 
     # Only update AUR packages:
     if [[ $2 == "-a" || $2 == "--aur" ]]; then
-      # Check for the owner of the AUR directory:
-      if [[ $(whoami) == \
-            "$(ls -l $AUR_DIR | tail -n1 | awk '{print $3}')" ]]; then
+      # check if the aur_upgrader user exists:
+      su -c true aur_upgrader
+      if [[ 0 == $? ]]; then
         update_aur
-
-      # Failed! Check if we are root:
-      elif [[ $(whoami) == "root" ]]; then
-        # check if the aur_upgrader user exists:
-        su -c true aur_upgrader
-        if [[ 0 == $? ]]; then
-          update_aur
-        else
-          print "aur_upgrader is not an existing user. Aborting."
-        fi
-      
-      # Lacking the right permissions.
       else
-        print -n "$fg[red]ERROR: lacking the permissions to update AUR"
-        print " packages.$fg[default]"
+        print "aur_upgrader is not an existing user. Aborting."
       fi
 
     # Only update the system through pacman:
