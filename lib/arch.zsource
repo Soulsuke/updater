@@ -30,7 +30,7 @@ function update_pacman()
   # It's always better to do this after an update, if zfs is being used
   # (sometimes mkinitcpio does not get triggered after some updates):
   which zpool &> /dev/null
-  if [[ 1 == $? ]]; then
+  if [[ 0 == $? ]]; then
     mkinitcpio -p linux
   fi
 
