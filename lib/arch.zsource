@@ -66,7 +66,7 @@ function update_aur()
   fi
  
   # Use yay:
-  su -c "yay -Syu" aur_upgrader
+  su -c "yay --aur --editmenu -Syu" aur_upgrader
 
   # At the end, remove the cache:
   rm -fr /home/aur_upgrader/.cache/yay
