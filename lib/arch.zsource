@@ -68,8 +68,13 @@ function update_aur()
   # Use yay:
   su -c "yay --aur --editmenu -Syu" aur_upgrader
 
-  # At the end, remove the cache:
-  rm -fr /home/aur_upgrader/.cache/yay
+  # At the end, remove the leftovers:
+  rm -fr /home/aur_upgrader/.cache
+  rm -fr /home/aur_upgrader/.electron
+  rm -fr /home/aur_upgrader/.node-gyp
+  rm -fr /home/aur_upgrader/.npm
+  rm -fr /home/aur_upgrader/.v8flags*
+  rm -fr /home/aur_upgrader/.w3m
 }
 
 #>>> Entry point to update Arch Linux:
