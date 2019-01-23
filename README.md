@@ -9,3 +9,6 @@ systems and you don't want to do it manually every time.
 
 To know if it runs on your system: ./main.zsh -h
 
+### To avoid tracking local changes to a certain file:  
+git update-index --assume-unchanged lib/distro\_independent.zsource  
+

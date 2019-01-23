@@ -1,5 +1,4 @@
 # Ignore swap files:
 *.sw[op]
 *~
-lib/distro_independent.zsource
 

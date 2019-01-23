@@ -14,11 +14,11 @@ function print_prompt()
   TMP_PRMT="/=====|$fg[blue]$1$fg[default]|"
 
   # Exactly 80 characters long:
-  while [[ $#TMP_PRMT -le 88 ]]; do
-    TMP_PRMT="$TMP_PRMT="  
+  while [[ $#TMP_PRMT -le $(( $COLUMNS + 7 )) ]]; do
+    TMP_PRMT="$TMP_PRMT="
   done
 
-  TMP_PRMT="$TMP_PRMT\\"
+  TMP_PRMT="$TMP_PRMT=\\"
 
   print "$TMP_PRMT"
   unset TMP_PRMT
