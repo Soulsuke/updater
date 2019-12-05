@@ -27,13 +27,6 @@ function update_pacman()
     pacman $@
   fi
 
-  # It's always better to do this after an update, if zfs is being used
-  # (sometimes mkinitcpio does not get triggered after some updates):
-  which zpool &> /dev/null
-  if [[ 0 == $? ]]; then
-    mkinitcpio -p linux
-  fi
-
   # Removed uninstalled packages from the cache:
   paccache -ruk0
 
