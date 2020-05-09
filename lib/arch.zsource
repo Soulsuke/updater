@@ -62,8 +62,8 @@ function update_aur()
   su -c "yay --aur --editmenu -Syu" aur_upgrader
 
   # At the end, remove any leftovers:
-  for i in /home/aur_upgrader/*; do
-    if [[ ${i} != /home/aur_upgrader/(.bash*|.config|.gnupg) ]]; then
+  for i in /home/aur_upgrader/*(D); do
+    if [[ ${i} != /home/aur_upgrader/(.|..|.bash*|.config|.gnupg) ]]; then
       rm -fr "${i}" &> /dev/null
     fi
   done
