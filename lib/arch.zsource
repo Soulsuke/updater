@@ -61,23 +61,12 @@ function update_aur()
   # Use yay:
   su -c "yay --aur --editmenu -Syu" aur_upgrader
 
-  # At the end, remove the leftovers:
-  TO_REMOVE=(
-    .cache
-    .electron
-    .node-gyp
-    .npm
-    .v8flags\*
-    .w3m
-  )
-  for i in ${TO_REMOVE}; do
-    for j in /home/aur_upgrader/${i}; do
-      if [[ -e ${j} ]]; then
-        rm -fr ${j} &> /dev/null
-      fi
-    done
+  # At the end, remove any leftovers:
+  for i in /home/aur_upgrader/*; do
+    if [[ ${i} != /home/aur_upgrader/(.bash*|.config|.gnupg) ]]; then
+      rm -fr "${i}" &> /dev/null
+    fi
   done
-  unset TO_REMOVE
 }
 
 #>>> Entry point to update Arch Linux:
