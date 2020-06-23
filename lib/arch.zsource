@@ -27,12 +27,6 @@ function update_pacman()
     pacman $@
   fi
 
-  # Removed uninstalled packages from the cache:
-  paccache -ruk0
-
-  # Just keep the latest 3 versions of installed packages in the cache:
-  paccache -r
-
   # If pkgfile is available, update it as well:
   which pkgfile &> /dev/null
   if [[ 0 == $? ]]; then
