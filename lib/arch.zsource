@@ -40,6 +40,8 @@ function update_pacman()
 # password.
 # To achieve that, add the following line to your sudoers file:
 # aur_upgrader ALL=(ALL:ALL) NOPASSWD: /usr/bin/pacman
+# Or the following line to doas config:
+# permit nopass aur_upgrader as root cmd pacman
 function update_aur()
 {
   # Because it's cool:
