@@ -54,8 +54,14 @@ function update_aur()
     return -1;
   fi
  
-  # Use yay:
-  su -c "yay --aur --editmenu -Syu" aur_upgrader
+  # Use the available aur helper:
+  if [[ $+commands[paru] ]]; then
+    print "Helper: paru"
+    su -c "paru --aur -Syu" aur_upgrader
+  elif [[ $+commands[yay] ]]; then
+    print "Helper: yay"
+    su -c "yay --aur --editmenu -Syu" aur_upgrader
+  fi
 
   # At the end, remove any leftovers:
   for i in /home/aur_upgrader/*(D); do
