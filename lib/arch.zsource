@@ -20,7 +20,7 @@ function update_pacman()
  
   # If this command is available, run it.
   # For more info check: https://github.com/Soulsuke/zfs-kernels
-  if command -v zfs-kernels-update-repo &> /dev/null; then
+  if [[ $+commands[zfs-kernels-update-repo] ]]; then
     zfs-kernels-update-repo
   fi
  
