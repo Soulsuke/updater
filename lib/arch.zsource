@@ -17,7 +17,13 @@ source ./lib/utility.zsource
 function update_pacman()
 {
   print_prompt "pacman"
-  
+ 
+  # If this command is available, run it.
+  # For more info check: https://github.com/Soulsuke/zfs-kernels
+  if command -v zfs-kernels-update-repo &> /dev/null; then
+    zfs-kernels-update-repo
+  fi
+ 
   # No parameters: standard pacman update.
   if [[ 0 == $# ]]; then
     pacman -Syu --noconfirm
