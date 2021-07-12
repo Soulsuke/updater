@@ -7,7 +7,7 @@ Max 80 characters per line, two spaces instead of tabs, and probably
 quite dirty. Still, quite handy when you got to maintain various
 systems and you don't want to do it manually every time.
 
-To know if it runs on your system: ./main.zsh -h
+To know if it runs on your system: ./up -h
 
 ### To avoid tracking local changes to a certain file:  
 git update-index --assume-unchanged lib/distro\_independent.zsource  
