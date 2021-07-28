@@ -33,11 +33,8 @@ function update_pacman()
     pacman $@
   fi
 
-  # If pkgfile is available, update it as well:
-  which pkgfile &> /dev/null
-  if [[ 0 == $? ]]; then
-    pkgfile -u
-  fi
+  # Update the packages list:
+  pacman -Fy
 }
 
 #>>> Update all AUR packages:
