@@ -20,7 +20,7 @@ function update_pacman()
  
   # If this command is available, run it.
   # For more info check: https://github.com/Soulsuke/zfs-kernels
-  if [[ $+commands[zfs-kernels-update-repo] ]]; then
+  if [[ 0 != $+commands[zfs-kernels-update-repo] ]]; then
     zfs-kernels-update-repo --prefer-current --prefer-newest
   fi
  
