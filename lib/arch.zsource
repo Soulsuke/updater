@@ -19,9 +19,9 @@ function update_pacman()
   print_prompt "pacman"
  
   # If this command is available, run it.
-  # For more info check: https://github.com/Soulsuke/zfs-kernels
-  if [[ 0 != $+commands[zfs-kernels-update-repo] ]]; then
-    zfs-kernels-update-repo --prefer-current --prefer-newest
+  # For more info check: https://github.com/Soulsuke/archzfs-plus-kernel
+  if [[ 0 != $+commands[archzfs-plus-kernel-update-repo] ]]; then
+    archzfs-plus-kernel-update-repo
   fi
  
   # No parameters: standard pacman update.
