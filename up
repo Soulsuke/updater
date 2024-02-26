@@ -15,9 +15,8 @@ __DISTRO__=""
 
 if hash lsb_release 2> /dev/null; then
   __DISTRO__=$(lsb_release --id | sed -e "s,.*[ \t],,g")
-
 else
-  __DISTRO__=$(grep "ID" /etc/os-release | sed "s,.*=,,g")
+  __DISTRO__=$(grep -E "^ID=" /etc/os-release | sed "s,ID=,,g")
 fi
 
 # Be sure it's all lowercase:
@@ -38,19 +37,23 @@ else
 fi
 cd $DIR_LOCATION
 
-# Arch Linux:
-if [[ "arch" == $__DISTRO__ ]]; then
-  source ./lib/arch.zsource
+# Depending on the distro:
+case $__DISTRO__ in
 
-# Debian and derivates:
-elif [[ "debian" == $__DISTRO__ ]]; then
-  source ./lib/debian.zsource
+  # Arch Linux:
+  arch|archarm) source ./lib/arch.zsource ;;
 
-# Unsupported distro:
-else
-  print -n "$fg[red]The following distro is not supported:$fg[default] "
-  print "$__DISTRO__"
-fi
+  # Debian and derivates:
+  debian) source ./lib/debian.zsource ;;
+
+  # Unsupported distro:
+  *)
+    print -n "$fg[red]The following distro is not supported:$fg[default] "
+    print "$__DISTRO__"
+    exit 1
+  ;;
+
+esac
 
 # Run the updater:
 update_distro "Updater" $@
